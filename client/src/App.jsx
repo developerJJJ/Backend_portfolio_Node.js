@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useParams, Navigate } from 'react-router-dom';
-import { Container, Row, Col, Navbar, Nav, Card, ListGroup, Button, Form, Alert, Table } from 'react-bootstrap';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useParams } from 'react-router-dom';
+import { Container, Row, Col, Navbar, Nav, ListGroup, Button, Form, Alert, Table, InputGroup, FormControl } from 'react-bootstrap';
 import axios from 'axios';
 
 // --- Auth Context & Helper ---
@@ -46,97 +46,220 @@ const useAuth = () => React.useContext(AuthContext);
 const Navigation = () => {
   const { user, logout } = useAuth();
   return (
-    <Navbar className="navbar-custom" expand="lg">
-      <Container fluid>
-        <Navbar.Brand as={Link} to="/">⚾ BaseballUSA</Navbar.Brand>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="me-auto">
-            <Nav.Link as={Link} to="/">Home</Nav.Link>
-            <Nav.Link as={Link} to="/board/general">General</Nav.Link>
-            <Nav.Link as={Link} to="/board/equipment">Equipment</Nav.Link>
-            <Nav.Link as={Link} to="/board/leagues">Leagues</Nav.Link>
-          </Nav>
+    <>
+      {/* Top Header: Logo, Search, Utility Links */}
+      <Navbar className="bg-white border-bottom pb-2 pt-3" expand="lg">
+        <Container>
+          <Navbar.Brand as={Link} to="/" className="d-flex align-items-center">
+            <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#f26522' }}>⚾ BaseballUSA</span>
+          </Navbar.Brand>
+          
+          <Form className="d-flex mx-auto" style={{ width: '40%' }}>
+            <InputGroup>
+              <Form.Select style={{ maxWidth: '100px' }}>
+                <option>All</option>
+                <option>Posts</option>
+                <option>Market</option>
+              </Form.Select>
+              <FormControl
+                type="search"
+                placeholder="Search..."
+                aria-label="Search"
+              />
+              <Button variant="outline-secondary"><i className="bi bi-search"></i> Search</Button>
+            </InputGroup>
+          </Form>
+
           <Nav>
-            {user ? (
-              <>
-                <Navbar.Text className="text-white me-3">
-                  Welcome, {user.username}
-                </Navbar.Text>
-                <Nav.Link onClick={logout} className="text-white">Logout</Nav.Link>
-              </>
-            ) : (
-              <>
-                <Nav.Link as={Link} to="/login" className="text-white">Login</Nav.Link>
-                <Nav.Link as={Link} to="/register" className="text-white">Register</Nav.Link>
-              </>
-            )}
+            <Nav.Link href="#" className="small">USA List</Nav.Link>
+            <Nav.Link href="#" className="small">Shopping Mall</Nav.Link>
           </Nav>
-        </Navbar.Collapse>
-      </Container>
-    </Navbar>
+        </Container>
+      </Navbar>
+
+      {/* Main Navigation Bar */}
+      <Navbar className="navbar-custom pt-0 pb-0" expand="lg">
+        <Container>
+          <Navbar.Toggle aria-controls="main-nav" />
+          <Navbar.Collapse id="main-nav">
+            <Nav className="me-auto">
+              <Nav.Link as={Link} to="/">Home</Nav.Link>
+              <Nav.Link as={Link} to="/board/general">Talk Lounge</Nav.Link>
+              <Nav.Link as={Link} to="/board/mlb">MLB Talk</Nav.Link>
+              <Nav.Link as={Link} to="/board/equipment">Equipment</Nav.Link>
+              <Nav.Link as={Link} to="/board/leagues">Leagues</Nav.Link>
+              <Nav.Link as={Link} to="/board/market">Buy & Sell</Nav.Link>
+            </Nav>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
+    </>
   );
 };
 
-const Sidebar = () => (
-  <div className="sidebar d-none d-md-block">
-    <h5>Community Boards</h5>
-    <ListGroup variant="flush">
-      <ListGroup.Item action as={Link} to="/board/general">General Discussion</ListGroup.Item>
-      <ListGroup.Item action as={Link} to="/board/mlb">MLB Talk</ListGroup.Item>
-      <ListGroup.Item action as={Link} to="/board/kbo">KBO / Asian Baseball</ListGroup.Item>
-      <ListGroup.Item action as={Link} to="/board/equipment">Equipment Exchange</ListGroup.Item>
-      <ListGroup.Item action as={Link} to="/board/leagues">League Recruitment</ListGroup.Item>
-    </ListGroup>
-    
-    <h5 className="mt-4">Marketplace</h5>
-    <ListGroup variant="flush">
-      <ListGroup.Item action>Used Bats</ListGroup.Item>
-      <ListGroup.Item action>Gloves</ListGroup.Item>
-    </ListGroup>
+const LoginWidget = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const { login } = useAuth();
+  const [error, setError] = useState('');
 
-    <div className="mt-4 p-3 bg-light border text-center">
-      <small>Ad Space</small>
-      <br/>
-      <strong>Support Local Leagues!</strong>
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post('/api/login', { username, password });
+      login(res.data.user, res.data.token);
+      setError('');
+    } catch (err) {
+      setError('Login failed');
+    }
+  };
+
+  return (
+    <div className="login-box mb-3">
+      <Form onSubmit={handleSubmit}>
+        <Row className="g-2">
+          <Col xs={8}>
+            <Form.Control 
+              size="sm" 
+              type="text" 
+              placeholder="ID" 
+              className="mb-1"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+            />
+            <Form.Control 
+              size="sm" 
+              type="password" 
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)} 
+            />
+          </Col>
+          <Col xs={4}>
+            <Button type="submit" className="login-btn">Login</Button>
+          </Col>
+        </Row>
+        {error && <small className="text-danger d-block mt-1">{error}</small>}
+        <div className="d-flex justify-content-between mt-2" style={{ fontSize: '0.8rem' }}>
+          <a href="#" className="text-muted">Find ID/PW</a>
+          <Link to="/register" className="text-muted">Sign Up</Link>
+        </div>
+      </Form>
     </div>
-  </div>
-);
+  );
+};
 
-const Home = () => (
-  <div>
-    <h3>Welcome to BaseballUSA</h3>
-    <p>The premier community for US Baseball enthusiasts.</p>
-    
-    <Row>
-      <Col md={6}>
-        <Card className="mb-3">
-          <Card.Header className="card-header-custom">Latest News</Card.Header>
-          <Card.Body>
-            <ul>
-              <li>Spring Training schedules released!</li>
-              <li>New composite bat regulations for 2026.</li>
-              <li>Local tournament sign-ups open.</li>
-            </ul>
-          </Card.Body>
-        </Card>
-      </Col>
-      <Col md={6}>
-        <Card className="mb-3">
-          <Card.Header className="card-header-custom">Hot Topics</Card.Header>
-          <Card.Body>
-             <ul>
-              <li>Best glove oil?</li>
-              <li>Who is winning the World Series?</li>
-              <li>Looking for catcher (NY area)</li>
-            </ul>
-          </Card.Body>
-        </Card>
-      </Col>
-    </Row>
-  </div>
-);
+const UserWidget = () => {
+  const { user, logout } = useAuth();
+  return (
+    <div className="login-box mb-3 text-center">
+      <p className="mb-2">Welcome, <strong>{user.username}</strong>!</p>
+      <div className="d-grid gap-2">
+        <Button variant="outline-secondary" size="sm">My Page</Button>
+        <Button variant="secondary" size="sm" onClick={logout}>Logout</Button>
+      </div>
+    </div>
+  );
+};
 
+const Sidebar = () => {
+  const { user } = useAuth();
+  return (
+    <div className="sidebar">
+      {user ? <UserWidget /> : <LoginWidget />}
+      
+      {/* Banner Area */}
+      <div className="bg-secondary text-white text-center py-4 mb-3">
+        Banner Ad
+      </div>
+
+      <h5>Hot Categories</h5>
+      <ListGroup variant="flush" className="mb-4">
+        <ListGroup.Item action as={Link} to="/board/general">Talk Lounge</ListGroup.Item>
+        <ListGroup.Item action as={Link} to="/board/health">Health & Beauty</ListGroup.Item>
+        <ListGroup.Item action as={Link} to="/board/food">Home & Food</ListGroup.Item>
+      </ListGroup>
+
+      <div className="bg-light border text-center p-3">
+        <small>Ad Space</small>
+        <br/>
+        <strong>Support Local Leagues!</strong>
+      </div>
+    </div>
+  );
+};
+
+const Home = () => {
+  // Dummy data for visual structure
+  const recentPosts = [
+    { cat: 'General', title: 'Has anyone used the new Easton bat?', id: 1 },
+    { cat: 'MLB', title: 'Dodgers lineup analysis', id: 2 },
+    { cat: 'Q&A', title: 'Best drills for U10 pitchers?', id: 3 },
+    { cat: 'Life', title: 'Traveling to Arizona for Spring Training', id: 4 },
+    { cat: 'Equip', title: 'Review: Wilson A2000', id: 5 },
+  ];
+
+  const marketPosts = [
+    { cat: 'Sell', title: 'Rawlings Heart of the Hide (Mint)', id: 10 },
+    { cat: 'Buy', title: 'Looking for catchers gear set', id: 11 },
+    { cat: 'Sell', title: 'Batting cage net 10x10', id: 12 },
+  ];
+
+  return (
+    <div>
+      {/* Promo Banner */}
+      <div className="bg-dark text-white p-4 mb-4 text-center rounded">
+        <h2>2026 Season Kickoff Event!</h2>
+        <p>Sign up now for early bird discounts.</p>
+      </div>
+
+      <Row>
+        <Col md={6} className="mb-4">
+          <h5 style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px', color: '#f26522' }}>Talk Lounge</h5>
+          <ul className="portal-list">
+            {recentPosts.map(p => (
+              <li key={p.id}>
+                <span className="category-tag">[{p.cat}]</span>
+                <Link to={`/post/${p.id}`}>{p.title}</Link>
+              </li>
+            ))}
+          </ul>
+        </Col>
+        <Col md={6} className="mb-4">
+          <h5 style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px', color: '#f26522' }}>Marketplace</h5>
+          <ul className="portal-list">
+            {marketPosts.map(p => (
+              <li key={p.id}>
+                <span className="category-tag">[{p.cat}]</span>
+                <Link to={`/post/${p.id}`}>{p.title}</Link>
+              </li>
+            ))}
+          </ul>
+        </Col>
+      </Row>
+
+      <Row>
+         <Col md={6} className="mb-4">
+          <h5 style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px', color: '#f26522' }}>League Info</h5>
+           <ul className="portal-list">
+            <li><span className="category-tag">[Notice]</span> Tournament Schedule Updated</li>
+            <li><span className="category-tag">[Recruit]</span> NY Rebels looking for P</li>
+            <li><span className="category-tag">[Result]</span> Week 4 Standings</li>
+          </ul>
+         </Col>
+         <Col md={6} className="mb-4">
+          <h5 style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px', color: '#f26522' }}>Life & Culture</h5>
+           <ul className="portal-list">
+            <li><span className="category-tag">[Travel]</span> Cooperstown Hotels</li>
+            <li><span className="category-tag">[Food]</span> Best stadium hot dogs?</li>
+          </ul>
+         </Col>
+      </Row>
+    </div>
+  );
+};
+
+// Re-using existing Login/Register pages as fallbacks or for specific routing needs
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -234,16 +357,16 @@ const Board = () => {
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3 className="text-capitalize">{category} Board</h3>
+        <h3 className="text-capitalize" style={{ color: '#f26522', borderBottom: '2px solid #f26522' }}>{category} Board</h3>
         {user && (
-          <Link to={`/create/${category}`} className="btn btn-baseball">
+          <Link to={`/create/${category}`} className="btn btn-baseball btn-sm">
             New Post
           </Link>
         )}
       </div>
 
-      <Table hover responsive>
-        <thead>
+      <Table hover responsive size="sm" className="table-portal">
+        <thead className="table-light">
           <tr>
             <th>Title</th>
             <th>Author</th>
@@ -254,7 +377,7 @@ const Board = () => {
         <tbody>
           {posts.map(post => (
             <tr key={post.id}>
-              <td><Link to={`/post/${post.id}`}>{post.title}</Link></td>
+              <td><Link to={`/post/${post.id}`} className="text-dark">{post.title}</Link></td>
               <td>{post.author}</td>
               <td>{new Date(post.created_at).toLocaleDateString()}</td>
               <td>{post.views || 0}</td>
@@ -293,7 +416,7 @@ const CreatePost = () => {
 
   return (
     <div>
-      <h3>Create Post in {category}</h3>
+      <h3 className="mb-3" style={{ color: '#f26522' }}>Write: {category}</h3>
       <Form onSubmit={handleSubmit}>
         <Form.Group className="mb-3">
           <Form.Label>Title</Form.Label>
@@ -301,7 +424,7 @@ const CreatePost = () => {
         </Form.Group>
         <Form.Group className="mb-3">
           <Form.Label>Content</Form.Label>
-          <Form.Control as="textarea" rows={5} value={content} onChange={e => setContent(e.target.value)} required />
+          <Form.Control as="textarea" rows={10} value={content} onChange={e => setContent(e.target.value)} required />
         </Form.Group>
         <Button type="submit" className="btn-baseball">Post</Button>
       </Form>
@@ -353,30 +476,32 @@ const PostDetail = () => {
   if (!post) return <p>Loading...</p>;
 
   return (
-    <Card>
-      <Card.Header className="d-flex justify-content-between align-items-center">
-        <h5>{post.title}</h5>
-        <small>{new Date(post.created_at).toLocaleString()}</small>
+    <Card className="shadow-sm">
+      <Card.Header className="bg-white border-bottom-0 pt-3">
+        <h4 style={{ color: '#333' }}>{post.title}</h4>
+        <div className="d-flex justify-content-between text-muted small">
+          <span>By: {post.author}</span>
+          <span>{new Date(post.created_at).toLocaleString()}</span>
+        </div>
       </Card.Header>
       <Card.Body>
-        <Card.Subtitle className="mb-2 text-muted">Posted by: {post.author}</Card.Subtitle>
-        <hr />
+        <hr className="mt-0" />
         {isEditing ? (
              <Form.Group className="mb-3">
-             <Form.Control as="textarea" rows={5} value={editContent} onChange={e => setEditContent(e.target.value)} required />
+             <Form.Control as="textarea" rows={10} value={editContent} onChange={e => setEditContent(e.target.value)} required />
              <div className="mt-2">
                  <Button variant="success" size="sm" onClick={handleUpdate} className="me-2">Save</Button>
                  <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)}>Cancel</Button>
              </div>
            </Form.Group>
         ) : (
-            <Card.Text style={{ whiteSpace: 'pre-wrap' }}>
+            <Card.Text style={{ whiteSpace: 'pre-wrap', minHeight: '200px' }}>
             {post.content}
             </Card.Text>
         )}
         
         {user && user.username === post.author && !isEditing && (
-          <div className="mt-4">
+          <div className="mt-4 text-end">
             <Button variant="outline-primary" size="sm" className="me-2" onClick={() => setIsEditing(true)}>Edit</Button>
             <Button variant="outline-danger" size="sm" onClick={handleDelete}>Delete</Button>
           </div>
@@ -391,12 +516,10 @@ function App() {
     <AuthProvider>
       <Router>
         <Navigation />
-        <Container fluid>
-          <Row>
-            <Col md={3} lg={2} className="p-0">
-              <Sidebar />
-            </Col>
-            <Col md={9} lg={10} className="main-content">
+        <Container>
+          <Row className="mt-4">
+            {/* Main Content: Left */}
+            <Col md={9} className="main-content">
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
@@ -405,6 +528,11 @@ function App() {
                 <Route path="/create/:category" element={<CreatePost />} />
                 <Route path="/post/:id" element={<PostDetail />} />
               </Routes>
+            </Col>
+            
+            {/* Sidebar: Right */}
+            <Col md={3} className="p-0">
+              <Sidebar />
             </Col>
           </Row>
         </Container>

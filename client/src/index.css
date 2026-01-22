@@ -1,43 +1,119 @@
 body {
-  background-color: #f4f4f4;
-  font-family: 'Arial', sans-serif;
+  background-color: #ffffff;
+  font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; /* Common Korean/Portal fonts */
+  font-size: 14px;
 }
 
+a {
+  text-decoration: none;
+  color: #333;
+}
+
+a:hover {
+  color: #f26522;
+  text-decoration: underline;
+}
+
+/* Header/Nav */
 .navbar-custom {
-  background-color: #1b5e20; /* Field Green */
+  background-color: #ffffff;
+  border-bottom: 3px solid #f26522; /* Orange Line */
+  padding-bottom: 0;
 }
 
-.navbar-custom .navbar-brand, .navbar-custom .nav-link {
-  color: white !important;
-}
-
-.sidebar {
-  background-color: white;
-  border-right: 1px solid #ddd;
-  min-height: 100vh;
-  padding: 20px;
-}
-
-.main-content {
-  padding: 20px;
-}
-
-.card-header-custom {
-  background-color: #b71c1c; /* Stitch Red */
-  color: white;
+.navbar-custom .navbar-brand {
+  color: #333 !important;
+  font-size: 24px;
   font-weight: bold;
 }
 
+.navbar-custom .nav-link {
+  color: #333 !important;
+  font-weight: bold;
+  padding: 10px 15px !important;
+}
+
+.navbar-custom .nav-link:hover {
+  color: #f26522 !important;
+}
+
+/* Sidebar */
+.sidebar {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.main-content {
+  padding: 20px 0;
+}
+
+/* Card/Panel Styles */
+.card {
+  border: none;
+  border-radius: 0;
+}
+
+.card-header-custom {
+  background-color: transparent;
+  color: #f26522;
+  font-weight: bold;
+  border-bottom: 2px solid #f26522;
+  padding: 10px 0;
+  margin-bottom: 10px;
+}
+
+/* Buttons */
 .btn-baseball {
-  background-color: #1b5e20;
+  background-color: #f26522;
+  border-color: #f26522;
   color: white;
+  border-radius: 0;
 }
 
 .btn-baseball:hover {
-  background-color: #144a18;
+  background-color: #d1541b;
+  border-color: #d1541b;
   color: white;
 }
 
+/* Portal Specifics */
+.portal-list {
+  list-style: none;
+  padding: 0;
+}
+
+.portal-list li {
+  padding: 5px 0;
+  border-bottom: 1px dotted #eee;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.category-tag {
+  color: #cc0000;
+  margin-right: 5px;
+  font-weight: normal;
+}
+
+.login-box {
+  border: 1px solid #ddd;
+  padding: 15px;
+  background: white;
+}
+
+.login-btn {
+  background-color: #f26522;
+  color: white;
+  height: 100%;
+  width: 100%;
+  border: none;
+  font-weight: bold;
+}
+
 table thead {
-    background-color: #e9ecef;
+    background-color: #f9f9f9;
+    border-bottom: 2px solid #f26522;
 }
