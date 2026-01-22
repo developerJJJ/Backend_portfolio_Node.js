@@ -1,0 +1,43 @@
+body {
+  background-color: #f4f4f4;
+  font-family: 'Arial', sans-serif;
+}
+
+.navbar-custom {
+  background-color: #1b5e20; /* Field Green */
+}
+
+.navbar-custom .navbar-brand, .navbar-custom .nav-link {
+  color: white !important;
+}
+
+.sidebar {
+  background-color: white;
+  border-right: 1px solid #ddd;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.main-content {
+  padding: 20px;
+}
+
+.card-header-custom {
+  background-color: #b71c1c; /* Stitch Red */
+  color: white;
+  font-weight: bold;
+}
+
+.btn-baseball {
+  background-color: #1b5e20;
+  color: white;
+}
+
+.btn-baseball:hover {
+  background-color: #144a18;
+  color: white;
+}
+
+table thead {
+    background-color: #e9ecef;
+}
