@@ -4,7 +4,7 @@
   "description": "Root package.json for deployment",
   "scripts": {
     "install-client": "cd client && npm install",
-    "install-server": "cd server && npm install",
+    "install-server": "cd server && npm install --legacy-peer-deps",
     "build-client": "cd client && npm run build",
     "build": "npm run install-client && npm run install-server && npm run build-client",
     "start": "cd server && node index.js"

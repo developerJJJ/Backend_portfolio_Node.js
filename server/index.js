@@ -1,9 +1,144 @@
-const express = require('express');
-const cors = require('cors');
-const sqlite3 = require('sqlite3').verbose();
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+// ===== DEBUG LOGGING START =====
+console.log('=== SERVER STARTUP DEBUG ===');
+console.log('Node version:', process.version);
+console.log('Platform:', process.platform);
+console.log('Architecture:', process.arch);
+console.log('Current working directory:', process.cwd());
+console.log('__dirname:', __dirname);
+console.log('NODE_PATH:', process.env.NODE_PATH || 'not set');
+console.log('NODE_ENV:', process.env.NODE_ENV || 'not set');
+
+const fs = require('fs');
 const path = require('path');
+
+// Check node_modules directory
+const nodeModulesPath = path.join(__dirname, 'node_modules');
+console.log('\n=== NODE_MODULES CHECK ===');
+console.log('node_modules path:', nodeModulesPath);
+console.log('node_modules exists:', fs.existsSync(nodeModulesPath));
+
+if (fs.existsSync(nodeModulesPath)) {
+  try {
+    const nodeModulesContents = fs.readdirSync(nodeModulesPath);
+    console.log('node_modules contents (first 20):', nodeModulesContents.slice(0, 20));
+    console.log('Total packages in node_modules:', nodeModulesContents.length);
+    
+    // Check for specific problematic packages
+    const checkPackages = ['npmlog', 'sqlite3', 'bcrypt', 'express', 'cors'];
+    console.log('\n=== PACKAGE EXISTENCE CHECK ===');
+    checkPackages.forEach(pkg => {
+      const pkgPath = path.join(nodeModulesPath, pkg);
+      const exists = fs.existsSync(pkgPath);
+      console.log(`${pkg}: ${exists ? 'EXISTS' : 'MISSING'}`);
+      if (exists) {
+        try {
+          const pkgJsonPath = path.join(pkgPath, 'package.json');
+          if (fs.existsSync(pkgJsonPath)) {
+            const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+            console.log(`  - Version: ${pkgJson.version}`);
+            console.log(`  - Main: ${pkgJson.main || 'not specified'}`);
+          }
+        } catch (e) {
+          console.log(`  - Error reading package.json: ${e.message}`);
+        }
+      }
+    });
+    
+    // Specifically check npmlog structure
+    const npmlogPath = path.join(nodeModulesPath, 'npmlog');
+    if (fs.existsSync(npmlogPath)) {
+      console.log('\n=== NPMLOG DETAILED CHECK ===');
+      try {
+        const npmlogContents = fs.readdirSync(npmlogPath);
+        console.log('npmlog directory contents:', npmlogContents);
+        const logJsPath = path.join(npmlogPath, 'log.js');
+        console.log('log.js exists:', fs.existsSync(logJsPath));
+        const packageJsonPath = path.join(npmlogPath, 'package.json');
+        if (fs.existsSync(packageJsonPath)) {
+          const pkgJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+          console.log('npmlog package.json main:', pkgJson.main);
+          console.log('npmlog package.json version:', pkgJson.version);
+        }
+      } catch (e) {
+        console.log('Error checking npmlog:', e.message);
+      }
+    }
+  } catch (e) {
+    console.error('Error reading node_modules:', e.message);
+  }
+}
+
+// Check package.json
+const packageJsonPath = path.join(__dirname, 'package.json');
+console.log('\n=== PACKAGE.JSON CHECK ===');
+if (fs.existsSync(packageJsonPath)) {
+  try {
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    console.log('Package name:', packageJson.name);
+    console.log('Package version:', packageJson.version);
+    console.log('Dependencies:', Object.keys(packageJson.dependencies || {}));
+  } catch (e) {
+    console.error('Error reading package.json:', e.message);
+  }
+}
+
+console.log('\n=== ATTEMPTING TO LOAD MODULES ===\n');
+// ===== DEBUG LOGGING END =====
+
+// Try to load modules with error handling
+let express, cors, sqlite3, bcrypt, jwt;
+
+try {
+  console.log('Loading express...');
+  express = require('express');
+  console.log('✓ express loaded');
+} catch (e) {
+  console.error('✗ Failed to load express:', e.message);
+  console.error('Stack:', e.stack);
+  process.exit(1);
+}
+
+try {
+  console.log('Loading cors...');
+  cors = require('cors');
+  console.log('✓ cors loaded');
+} catch (e) {
+  console.error('✗ Failed to load cors:', e.message);
+  console.error('Stack:', e.stack);
+  process.exit(1);
+}
+
+try {
+  console.log('Loading sqlite3...');
+  sqlite3 = require('sqlite3').verbose();
+  console.log('✓ sqlite3 loaded');
+} catch (e) {
+  console.error('✗ Failed to load sqlite3:', e.message);
+  console.error('Stack:', e.stack);
+  process.exit(1);
+}
+
+try {
+  console.log('Loading bcrypt...');
+  bcrypt = require('bcrypt');
+  console.log('✓ bcrypt loaded');
+} catch (e) {
+  console.error('✗ Failed to load bcrypt:', e.message);
+  console.error('Stack:', e.stack);
+  process.exit(1);
+}
+
+try {
+  console.log('Loading jsonwebtoken...');
+  jwt = require('jsonwebtoken');
+  console.log('✓ jsonwebtoken loaded');
+} catch (e) {
+  console.error('✗ Failed to load jsonwebtoken:', e.message);
+  console.error('Stack:', e.stack);
+  process.exit(1);
+}
+
+console.log('\n=== ALL MODULES LOADED SUCCESSFULLY ===\n');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,15 +147,15 @@ const SECRET_KEY = 'baseball-usa-secret-key'; // In prod, use ENV
 app.use(cors());
 app.use(express.json());
 
+// --- Middleware ---
+const dbPath = path.resolve(__dirname, 'baseball.db');
+const clientDistPath = path.resolve(__dirname, '../client/dist');
+
 // Health check endpoint
 app.get('/health', (req, res) => res.send('Server is healthy'));
 
 // Serve static files from the React app
 app.use(express.static(clientDistPath));
-
-// --- Middleware ---
-const dbPath = path.resolve(__dirname, 'baseball.db');
-const clientDistPath = path.resolve(__dirname, '../client/dist');
 console.log(`Serving static files from: ${clientDistPath}`);
 
 // Debug: Check if client/dist exists and list files
