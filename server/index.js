@@ -159,7 +159,6 @@ app.use(express.static(clientDistPath));
 console.log(`Serving static files from: ${clientDistPath}`);
 
 // Debug: Check if client/dist exists and list files
-const fs = require('fs');
 if (fs.existsSync(clientDistPath)) {
   console.log('client/dist directory exists. Contents:', fs.readdirSync(clientDistPath));
 } else {
