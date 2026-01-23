@@ -6,11 +6,14 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const SECRET_KEY = 'baseball-usa-secret-key'; // In prod, use ENV
 
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, '../client/dist')));
 
 // --- Database Setup ---
 const dbPath = path.resolve(__dirname, 'baseball.db');
@@ -171,6 +174,12 @@ app.delete('/api/posts/:id', authenticateToken, (req, res) => {
       res.json({ message: 'Deleted' });
     });
   });
+});
+
+// The "catchall" handler: for any request that doesn't
+// match one above, send back React's index.html file.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
 app.listen(PORT, () => {
