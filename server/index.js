@@ -12,11 +12,25 @@ const SECRET_KEY = 'baseball-usa-secret-key'; // In prod, use ENV
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../client/dist')));
+// Health check endpoint
+app.get('/health', (req, res) => res.send('Server is healthy'));
 
-// --- Database Setup ---
+// Serve static files from the React app
+app.use(express.static(clientDistPath));
+
+// --- Middleware ---
 const dbPath = path.resolve(__dirname, 'baseball.db');
+const clientDistPath = path.resolve(__dirname, '../client/dist');
+console.log(`Serving static files from: ${clientDistPath}`);
+
+// Debug: Check if client/dist exists and list files
+const fs = require('fs');
+if (fs.existsSync(clientDistPath)) {
+  console.log('client/dist directory exists. Contents:', fs.readdirSync(clientDistPath));
+} else {
+  console.error('CRITICAL: client/dist directory does NOT exist. Frontend will not load.');
+}
+
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('Error opening database', err);
@@ -179,7 +193,13 @@ app.delete('/api/posts/:id', authenticateToken, (req, res) => {
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  const indexPath = path.join(clientDistPath, 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('Error sending index.html:', err);
+      res.status(500).send('Error loading frontend');
+    }
+  });
 });
 
 app.listen(PORT, () => {
