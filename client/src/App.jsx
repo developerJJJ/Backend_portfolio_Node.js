@@ -190,110 +190,255 @@ const Sidebar = () => {
 };
 
 const Home = () => {
-  const [recentPosts, setRecentPosts] = useState([]);
+
+  const [generalPosts, setGeneralPosts] = useState([]);
+
   const [marketPosts, setMarketPosts] = useState([]);
+
+  const [leaguePosts, setLeaguePosts] = useState([]);
+
+  const [lifePosts, setLifePosts] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
+
+
   useEffect(() => {
+
     const fetchData = async () => {
+
       try {
+
         setLoading(true);
-        const [resGeneral, resMarket] = await Promise.all([
+
+        const [resGeneral, resMarket, resLeagues, resLife] = await Promise.all([
+
           axios.get('/api/posts?category=general'),
-          axios.get('/api/posts?category=market')
+
+          axios.get('/api/posts?category=market'),
+
+          axios.get('/api/posts?category=leagues'),
+
+          axios.get('/api/posts?category=life')
+
         ]);
-        setRecentPosts(resGeneral.data.slice(0, 5));
+
+        setGeneralPosts(resGeneral.data.slice(0, 5));
+
         setMarketPosts(resMarket.data.slice(0, 5));
+
+        setLeaguePosts(resLeagues.data.slice(0, 5));
+
+        setLifePosts(resLife.data.slice(0, 5));
+
       } catch (err) {
+
         console.error('Error fetching home data:', err);
+
       } finally {
+
         setLoading(false);
+
       }
+
     };
+
     fetchData();
+
   }, []);
 
+
+
   return (
+
     <div>
+
       {/* Promo Banner */}
+
       <div className="bg-dark text-white p-4 mb-4 text-center rounded">
+
         <h2>2026 Season Kickoff Event!</h2>
+
         <p>Sign up now for early bird discounts.</p>
+
       </div>
 
+
+
       {loading ? <p>Loading data...</p> : (
+
         <>
+
           <Row>
-                                <Col md={6} className="mb-4">
-                                  <div className="d-flex justify-content-between align-items-center mb-2" style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px' }}>
-                                    <h5 className="m-0">
-                                      <Link to="/board/general" style={{ color: '#f26522', textDecoration: 'none' }}>Talk Lounge</Link>
-                                    </h5>
-                                    <Link to="/board/general" className="text-muted small">See More &raquo;</Link>
-                                  </div>
-                                  <ul className="portal-list">
-                                    {recentPosts.map(p => (
-                                      <li key={p.id} className="clickable-li">
-                                        <Link to={`/post/${p.id}`} className="d-block w-100 h-100 text-decoration-none color-inherit">
-                                          <span className="category-tag">[{p.category}]</span>
-                                          <span className="post-title-text">{p.title}</span>
-                                        </Link>
-                                      </li>
-                                    ))}
-                                    {recentPosts.length === 0 && <li>No posts yet</li>}
-                                  </ul>
-                                </Col>
-                                <Col md={6} className="mb-4">
-                                  <div className="d-flex justify-content-between align-items-center mb-2" style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px' }}>
-                                    <h5 className="m-0">
-                                      <Link to="/board/market" style={{ color: '#f26522', textDecoration: 'none' }}>Marketplace</Link>
-                                    </h5>
-                                    <Link to="/board/market" className="text-muted small">See More &raquo;</Link>
-                                  </div>
-                                  <ul className="portal-list">
-                                    {marketPosts.map(p => (
-                                      <li key={p.id} className="clickable-li">
-                                        <Link to={`/post/${p.id}`} className="d-block w-100 h-100 text-decoration-none color-inherit">
-                                          <span className="category-tag">[{p.category}]</span>
-                                          <span className="post-title-text">{p.title}</span>
-                                        </Link>
-                                      </li>
-                                    ))}
-                                    {marketPosts.length === 0 && <li>No posts yet</li>}
-                                  </ul>
-                                </Col>          </Row>
+
+            <Col md={6} className="mb-4">
+
+              <div className="d-flex justify-content-between align-items-center mb-2" style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px' }}>
+
+                <h5 className="m-0">
+
+                  <Link to="/board/general" style={{ color: '#f26522', textDecoration: 'none' }}>Talk Lounge</Link>
+
+                </h5>
+
+                <Link to="/board/general" className="text-muted small">See More &raquo;</Link>
+
+              </div>
+
+              <ul className="portal-list">
+
+                {generalPosts.map(p => (
+
+                  <li key={p.id} className="clickable-li">
+
+                    <Link to={`/post/${p.id}`} className="d-block w-100 h-100 text-decoration-none color-inherit">
+
+                      <span className="category-tag">[{p.category}]</span>
+
+                      <span className="post-title-text">{p.title}</span>
+
+                    </Link>
+
+                  </li>
+
+                ))}
+
+                {generalPosts.length === 0 && <li>No posts yet</li>}
+
+              </ul>
+
+            </Col>
+
+            <Col md={6} className="mb-4">
+
+              <div className="d-flex justify-content-between align-items-center mb-2" style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px' }}>
+
+                <h5 className="m-0">
+
+                  <Link to="/board/market" style={{ color: '#f26522', textDecoration: 'none' }}>Marketplace</Link>
+
+                </h5>
+
+                <Link to="/board/market" className="text-muted small">See More &raquo;</Link>
+
+              </div>
+
+              <ul className="portal-list">
+
+                {marketPosts.map(p => (
+
+                  <li key={p.id} className="clickable-li">
+
+                    <Link to={`/post/${p.id}`} className="d-block w-100 h-100 text-decoration-none color-inherit">
+
+                      <span className="category-tag">[{p.category}]</span>
+
+                      <span className="post-title-text">{p.title}</span>
+
+                    </Link>
+
+                  </li>
+
+                ))}
+
+                {marketPosts.length === 0 && <li>No posts yet</li>}
+
+              </ul>
+
+            </Col>
+
+          </Row>
+
+
+
+          <Row>
+
+            <Col md={6} className="mb-4">
+
+              <div className="d-flex justify-content-between align-items-center mb-2" style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px' }}>
+
+                <h5 className="m-0">
+
+                  <Link to="/board/leagues" style={{ color: '#f26522', textDecoration: 'none' }}>League Info</Link>
+
+                </h5>
+
+                <Link to="/board/leagues" className="text-muted small">See More &raquo;</Link>
+
+              </div>
+
+              <ul className="portal-list">
+
+                {leaguePosts.map(p => (
+
+                  <li key={p.id} className="clickable-li">
+
+                    <Link to={`/post/${p.id}`} className="d-block w-100 h-100 text-decoration-none color-inherit">
+
+                      <span className="category-tag">[{p.category}]</span>
+
+                      <span className="post-title-text">{p.title}</span>
+
+                    </Link>
+
+                  </li>
+
+                ))}
+
+                {leaguePosts.length === 0 && <li>No posts yet</li>}
+
+              </ul>
+
+            </Col>
+
+            <Col md={6} className="mb-4">
+
+              <div className="d-flex justify-content-between align-items-center mb-2" style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px' }}>
+
+                <h5 className="m-0">
+
+                  <Link to="/board/life" style={{ color: '#f26522', textDecoration: 'none' }}>Life & Culture</Link>
+
+                </h5>
+
+                <Link to="/board/life" className="text-muted small">See More &raquo;</Link>
+
+              </div>
+
+              <ul className="portal-list">
+
+                {lifePosts.map(p => (
+
+                  <li key={p.id} className="clickable-li">
+
+                    <Link to={`/post/${p.id}`} className="d-block w-100 h-100 text-decoration-none color-inherit">
+
+                      <span className="category-tag">[{p.category}]</span>
+
+                      <span className="post-title-text">{p.title}</span>
+
+                    </Link>
+
+                  </li>
+
+                ))}
+
+                {lifePosts.length === 0 && <li>No posts yet</li>}
+
+              </ul>
+
+            </Col>
+
+          </Row>
+
         </>
+
       )}
 
-      <Row>
-         <Col md={6} className="mb-4">
-          <div className="d-flex justify-content-between align-items-center mb-2" style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px' }}>
-            <h5 className="m-0">
-              <Link to="/board/leagues" style={{ color: '#f26522', textDecoration: 'none' }}>League Info</Link>
-            </h5>
-            <Link to="/board/leagues" className="text-muted small">See More &raquo;</Link>
-          </div>
-           <ul className="portal-list">
-            <li className="clickable-li"><Link to="/board/leagues" className="d-block text-decoration-none color-inherit"><span className="category-tag">[Notice]</span> Tournament Schedule Updated</Link></li>
-            <li className="clickable-li"><Link to="/board/leagues" className="d-block text-decoration-none color-inherit"><span className="category-tag">[Recruit]</span> NY Rebels looking for P</Link></li>
-            <li className="clickable-li"><Link to="/board/leagues" className="d-block text-decoration-none color-inherit"><span className="category-tag">[Result]</span> Week 4 Standings</Link></li>
-          </ul>
-         </Col>
-         <Col md={6} className="mb-4">
-          <div className="d-flex justify-content-between align-items-center mb-2" style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px' }}>
-            <h5 className="m-0">
-              <Link to="/board/life" style={{ color: '#f26522', textDecoration: 'none' }}>Life & Culture</Link>
-            </h5>
-            <Link to="/board/life" className="text-muted small">See More &raquo;</Link>
-          </div>
-           <ul className="portal-list">
-            <li className="clickable-li"><Link to="/board/life" className="d-block text-decoration-none color-inherit"><span className="category-tag">[Travel]</span> Cooperstown Hotels</Link></li>
-            <li className="clickable-li"><Link to="/board/life" className="d-block text-decoration-none color-inherit"><span className="category-tag">[Food]</span> Best stadium hot dogs?</Link></li>
-          </ul>
-         </Col>
-      </Row>
     </div>
+
   );
+
 };
 
 // Re-using existing Login/Register pages as fallbacks or for specific routing needs

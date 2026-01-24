@@ -146,6 +146,8 @@ async function initDb() {
       const insert = db.prepare('INSERT INTO posts (title, content, author, category) VALUES (?, ?, ?, ?)');
       insert.run('Welcome to BaseballUSA!', 'This is the first post on the platform. Feel free to discuss anything baseball!', 'admin', 'general');
       insert.run('Best bats for 2026', 'What are your recommendations for the new season?', 'admin', 'equipment');
+      insert.run('2026 Tournament Schedule', 'The spring season schedule is now live!', 'admin', 'leagues');
+      insert.run('Cooperstown Travel Guide', 'Top tips for visiting the Hall of Fame.', 'admin', 'life');
       console.log('Seed data inserted successfully.');
     }
     console.log('Database tables initialized.');
