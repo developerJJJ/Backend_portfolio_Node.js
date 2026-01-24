@@ -228,6 +228,21 @@ app.get('/api/posts', (req, res) => {
   }
 });
 
+// Search Posts
+app.get('/api/search', (req, res) => {
+  const { q } = req.query;
+  if (!q) return res.json([]);
+  try {
+    const searchTerm = `%${q}%`;
+    const sql = 'SELECT * FROM posts WHERE title LIKE ? OR content LIKE ? ORDER BY created_at DESC';
+    const rows = db.prepare(sql).all(searchTerm, searchTerm);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get Single Post
 app.get('/api/posts/:id', (req, res) => {
   const id = Number(req.params.id);

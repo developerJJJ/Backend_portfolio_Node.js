@@ -1,38 +1,42 @@
-import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useParams } from "react-router-dom";
-import { Container, Row, Col, Navbar, Nav, ListGroup, Button, Form, Alert, Table, InputGroup, FormControl, Card } from "react-bootstrap";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Container, Row, Col, Navbar, Nav, ListGroup, Button, Form, Alert, Table, InputGroup, FormControl, Card } from 'react-bootstrap';
+import axios from 'axios';
 
 // --- Auth Context & Helper ---
 const AuthContext = React.createContext(null);
 
 const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")) || null);
-  const [token, setToken] = useState(localStorage.getItem("token") || null);
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || null);
+  const [token, setToken] = useState(localStorage.getItem('token') || null);
 
   useEffect(() => {
     if (token) {
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
-      delete axios.defaults.headers.common["Authorization"];
+      delete axios.defaults.headers.common['Authorization'];
     }
   }, [token]);
 
   const login = (userData, authToken) => {
     setUser(userData);
     setToken(authToken);
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("token", authToken);
+    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('token', authToken);
   };
 
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
   };
 
-  return <AuthContext.Provider value={{ user, token, login, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, token, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 const useAuth = () => React.useContext(AuthContext);
@@ -41,36 +45,46 @@ const useAuth = () => React.useContext(AuthContext);
 
 const Navigation = () => {
   const { user, logout } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
   return (
     <>
       {/* Top Header: Logo, Search, Utility Links */}
       <Navbar className="bg-white border-bottom pb-2 pt-3" expand="lg">
         <Container>
           <Navbar.Brand as={Link} to="/" className="d-flex align-items-center">
-            <span style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#f26522" }}>⚾ BaseballUSA</span>
+            <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#f26522' }}>⚾ BaseballUSA</span>
           </Navbar.Brand>
-
-          <Form className="d-flex mx-auto" style={{ width: "40%" }}>
+          
+          <Form className="d-flex mx-auto" style={{ width: '40%' }} onSubmit={handleSearch}>
             <InputGroup>
-              <Form.Select style={{ maxWidth: "100px" }}>
+              <Form.Select style={{ maxWidth: '100px' }}>
                 <option>All</option>
                 <option>Posts</option>
                 <option>Market</option>
               </Form.Select>
-              <FormControl type="search" placeholder="Search..." aria-label="Search" />
-              <Button variant="outline-secondary">
-                <i className="bi bi-search"></i> Search
-              </Button>
+              <FormControl
+                type="search"
+                placeholder="Search..."
+                aria-label="Search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <Button variant="outline-secondary" type="submit"><i className="bi bi-search"></i> Search</Button>
             </InputGroup>
           </Form>
 
           <Nav>
-            <Nav.Link href="#" className="small">
-              USA List
-            </Nav.Link>
-            <Nav.Link href="#" className="small">
-              Shopping Mall
-            </Nav.Link>
+            <Nav.Link href="#" className="small">USA List</Nav.Link>
+            <Nav.Link href="#" className="small">Shopping Mall</Nav.Link>
           </Nav>
         </Container>
       </Navbar>
@@ -81,24 +95,12 @@ const Navigation = () => {
           <Navbar.Toggle aria-controls="main-nav" />
           <Navbar.Collapse id="main-nav">
             <Nav className="me-auto">
-              <Nav.Link as={Link} to="/">
-                Home
-              </Nav.Link>
-              <Nav.Link as={Link} to="/board/general">
-                Talk Lounge
-              </Nav.Link>
-              <Nav.Link as={Link} to="/board/mlb">
-                MLB Talk
-              </Nav.Link>
-              <Nav.Link as={Link} to="/board/equipment">
-                Equipment
-              </Nav.Link>
-              <Nav.Link as={Link} to="/board/leagues">
-                Leagues
-              </Nav.Link>
-              <Nav.Link as={Link} to="/board/market">
-                Buy & Sell
-              </Nav.Link>
+              <Nav.Link as={Link} to="/">Home</Nav.Link>
+              <Nav.Link as={Link} to="/board/general">Talk Lounge</Nav.Link>
+              <Nav.Link as={Link} to="/board/mlb">MLB Talk</Nav.Link>
+              <Nav.Link as={Link} to="/board/equipment">Equipment</Nav.Link>
+              <Nav.Link as={Link} to="/board/leagues">Leagues</Nav.Link>
+              <Nav.Link as={Link} to="/board/market">Buy & Sell</Nav.Link>
             </Nav>
           </Navbar.Collapse>
         </Container>
@@ -659,6 +661,73 @@ const PostDetail = () => {
   );
 };
 
+const SearchResult = () => {
+  const location = useLocation();
+  const query = new URLSearchParams(location.search).get('q');
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (query) {
+      fetchResults();
+    }
+  }, [query]);
+
+  const fetchResults = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`/api/search?q=${encodeURIComponent(query)}`);
+      setResults(res.data);
+    } catch (err) {
+      console.error('Search error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <h3 className="mb-4" style={{ color: '#f26522', borderBottom: '2px solid #f26522', paddingBottom: '10px' }}>
+        Search Results for: "{query}"
+      </h3>
+
+      {loading ? <p>Searching...</p> : (
+        <Table hover responsive size="sm" className="table-portal">
+          <thead className="table-light">
+            <tr>
+              <th>Board</th>
+              <th>Title</th>
+              <th>Author</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {results.map(post => (
+              <tr key={post.id} className="clickable-li">
+                <td className="text-muted small">[{post.category}]</td>
+                <td>
+                  <Link to={`/post/${post.id}`} className="text-dark d-block">
+                    {post.title}
+                  </Link>
+                </td>
+                <td>{post.author}</td>
+                <td>{new Date(post.created_at).toLocaleDateString()}</td>
+              </tr>
+            ))}
+            {!loading && results.length === 0 && (
+              <tr>
+                <td colSpan="4" className="text-center py-4 text-muted">
+                  No results found for "{query}". Try a different keyword.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </Table>
+      )}
+    </div>
+  );
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -675,9 +744,10 @@ function App() {
                 <Route path="/board/:category" element={<Board />} />
                 <Route path="/create/:category" element={<CreatePost />} />
                 <Route path="/post/:id" element={<PostDetail />} />
+                <Route path="/search" element={<SearchResult />} />
               </Routes>
             </Col>
-
+            
             {/* Sidebar: Right */}
             <Col md={3} className="p-0">
               <Sidebar />
@@ -688,5 +758,4 @@ function App() {
     </AuthProvider>
   );
 }
-
 export default App;
