@@ -1,5 +1,7 @@
 # BaseballUSA ⚾
 
+![Main Page Screenshot](./main_page.png)
+
 BaseballUSA is a full-stack community portal designed for US baseball enthusiasts. Inspired by the density and functionality of community sites like MissyUSA, it provides a dedicated space for discussing leagues, equipment, and general baseball topics.
 
 ## 🛠 Tech Stack
