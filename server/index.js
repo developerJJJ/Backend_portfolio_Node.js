@@ -82,6 +82,12 @@ const SECRET_KEY = 'baseball-usa-secret-key'; // In prod, use ENV
 app.use(cors());
 app.use(express.json());
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
 // --- Middleware ---
 const dbPath = path.resolve(__dirname, 'baseball.db');
 const clientDistPath = path.resolve(__dirname, '../client/dist');
@@ -132,14 +138,15 @@ async function initDb() {
     // Seed Data
     const count = db.prepare('SELECT COUNT(*) as count FROM posts').get().count;
     if (count === 0) {
-      // Create admin user
+      console.log('Seeding database...');
+      // Create admin user if not exists
       const hashedAdminPw = await bcrypt.hash('admin123', 10);
-      db.prepare('INSERT INTO users (username, password) VALUES (?, ?)').run('admin', hashedAdminPw);
+      db.prepare('INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)').run('admin', hashedAdminPw);
 
       const insert = db.prepare('INSERT INTO posts (title, content, author, category) VALUES (?, ?, ?, ?)');
       insert.run('Welcome to BaseballUSA!', 'This is the first post on the platform. Feel free to discuss anything baseball!', 'admin', 'general');
       insert.run('Best bats for 2026', 'What are your recommendations for the new season?', 'admin', 'equipment');
-      console.log('Seed data inserted.');
+      console.log('Seed data inserted successfully.');
     }
     console.log('Database tables initialized.');
   } catch (err) {
@@ -221,7 +228,7 @@ app.get('/api/posts', (req, res) => {
 
 // Get Single Post
 app.get('/api/posts/:id', (req, res) => {
-  const { id } = req.params;
+  const id = Number(req.params.id);
   try {
     // Increment views
     db.prepare('UPDATE posts SET views = views + 1 WHERE id = ?').run(id);
@@ -243,7 +250,7 @@ app.post('/api/posts', authenticateToken, (req, res) => {
   try {
     const stmt = db.prepare('INSERT INTO posts (title, content, author, category) VALUES (?, ?, ?, ?)');
     const info = stmt.run(title, content, author, category);
-    res.json({ id: info.lastInsertRowid, title, content, author, category });
+    res.json({ id: Number(info.lastInsertRowid), title, content, author, category });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -252,7 +259,7 @@ app.post('/api/posts', authenticateToken, (req, res) => {
 
 // Update Post (Protected)
 app.put('/api/posts/:id', authenticateToken, (req, res) => {
-  const { id } = req.params;
+  const id = Number(req.params.id);
   const { content } = req.body;
   const user = req.user.username;
 
@@ -272,7 +279,7 @@ app.put('/api/posts/:id', authenticateToken, (req, res) => {
 
 // Delete Post (Protected)
 app.delete('/api/posts/:id', authenticateToken, (req, res) => {
-  const { id } = req.params;
+  const id = Number(req.params.id);
   const user = req.user.username;
 
   try {
