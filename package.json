@@ -10,7 +10,7 @@
     "start": "cd server && node index.js"
   },
   "engines": {
-    "node": "^22.0.0"
+    "node": "^24.0.0"
   },
   "dependencies": {}
 }
