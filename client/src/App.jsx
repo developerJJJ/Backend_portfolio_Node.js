@@ -224,37 +224,42 @@ const Home = () => {
       {loading ? <p>Loading data...</p> : (
         <>
           <Row>
-            <Col md={6} className="mb-4">
-              <h5 style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px', color: '#f26522' }}>Talk Lounge</h5>
-              <ul className="portal-list">
-                {recentPosts.map(p => (
-                  <li key={p.id}>
-                    <span className="category-tag">[{p.category}]</span>
-                    <Link to={`/post/${p.id}`}>{p.title}</Link>
-                  </li>
-                ))}
-                {recentPosts.length === 0 && <li>No posts yet</li>}
-              </ul>
-            </Col>
-            <Col md={6} className="mb-4">
-              <h5 style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px', color: '#f26522' }}>Marketplace</h5>
-              <ul className="portal-list">
-                {marketPosts.map(p => (
-                  <li key={p.id}>
-                    <span className="category-tag">[{p.category}]</span>
-                    <Link to={`/post/${p.id}`}>{p.title}</Link>
-                  </li>
-                ))}
-                {marketPosts.length === 0 && <li>No posts yet</li>}
-              </ul>
-            </Col>
-          </Row>
+                      <Col md={6} className="mb-4">
+                        <h5 style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px', color: '#f26522' }}>
+                          <Link to="/board/general" style={{ color: 'inherit', textDecoration: 'none' }}>Talk Lounge</Link>
+                        </h5>
+                        <ul className="portal-list">
+                          {recentPosts.map(p => (
+                            <li key={p.id}>
+                              <span className="category-tag">[{p.category}]</span>
+                              <Link to={`/post/${p.id}`}>{p.title}</Link>
+                            </li>
+                          ))}
+                          {recentPosts.length === 0 && <li>No posts yet</li>}
+                        </ul>
+                      </Col>
+                      <Col md={6} className="mb-4">
+                        <h5 style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px', color: '#f26522' }}>
+                          <Link to="/board/market" style={{ color: 'inherit', textDecoration: 'none' }}>Marketplace</Link>
+                        </h5>
+                        <ul className="portal-list">
+                          {marketPosts.map(p => (
+                            <li key={p.id}>
+                              <span className="category-tag">[{p.category}]</span>
+                              <Link to={`/post/${p.id}`}>{p.title}</Link>
+                            </li>
+                          ))}
+                          {marketPosts.length === 0 && <li>No posts yet</li>}
+                        </ul>
+                      </Col>          </Row>
         </>
       )}
 
       <Row>
          <Col md={6} className="mb-4">
-          <h5 style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px', color: '#f26522' }}>League Info</h5>
+          <h5 style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px', color: '#f26522' }}>
+            <Link to="/board/leagues" style={{ color: 'inherit', textDecoration: 'none' }}>League Info</Link>
+          </h5>
            <ul className="portal-list">
             <li><span className="category-tag">[Notice]</span> Tournament Schedule Updated</li>
             <li><span className="category-tag">[Recruit]</span> NY Rebels looking for P</li>
@@ -262,7 +267,9 @@ const Home = () => {
           </ul>
          </Col>
          <Col md={6} className="mb-4">
-          <h5 style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px', color: '#f26522' }}>Life & Culture</h5>
+          <h5 style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px', color: '#f26522' }}>
+            <Link to="/board/life" style={{ color: 'inherit', textDecoration: 'none' }}>Life & Culture</Link>
+          </h5>
            <ul className="portal-list">
             <li><span className="category-tag">[Travel]</span> Cooperstown Hotels</li>
             <li><span className="category-tag">[Food]</span> Best stadium hot dogs?</li>
