@@ -1,15 +1,25 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import express from 'express';
+import cors from 'cors';
+import Database from 'better-sqlite3';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+
 // ===== DEBUG LOGGING START =====
 console.log('=== SERVER STARTUP DEBUG ===');
 console.log('Node version:', process.version);
 console.log('Platform:', process.platform);
 console.log('Architecture:', process.arch);
 console.log('Current working directory:', process.cwd());
+
+// Define __dirname for ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 console.log('__dirname:', __dirname);
 console.log('NODE_PATH:', process.env.NODE_PATH || 'not set');
 console.log('NODE_ENV:', process.env.NODE_ENV || 'not set');
-
-const fs = require('fs');
-const path = require('path');
 
 // Check node_modules directory
 const nodeModulesPath = path.join(__dirname, 'node_modules');
@@ -24,7 +34,7 @@ if (fs.existsSync(nodeModulesPath)) {
     console.log('Total packages in node_modules:', nodeModulesContents.length);
     
     // Check for specific problematic packages
-    const checkPackages = ['npmlog', 'sqlite3', 'bcrypt', 'express', 'cors'];
+    const checkPackages = ['npmlog', 'better-sqlite3', 'bcrypt', 'express', 'cors'];
     console.log('\n=== PACKAGE EXISTENCE CHECK ===');
     checkPackages.forEach(pkg => {
       const pkgPath = path.join(nodeModulesPath, pkg);
@@ -43,26 +53,6 @@ if (fs.existsSync(nodeModulesPath)) {
         }
       }
     });
-    
-    // Specifically check npmlog structure
-    const npmlogPath = path.join(nodeModulesPath, 'npmlog');
-    if (fs.existsSync(npmlogPath)) {
-      console.log('\n=== NPMLOG DETAILED CHECK ===');
-      try {
-        const npmlogContents = fs.readdirSync(npmlogPath);
-        console.log('npmlog directory contents:', npmlogContents);
-        const logJsPath = path.join(npmlogPath, 'log.js');
-        console.log('log.js exists:', fs.existsSync(logJsPath));
-        const packageJsonPath = path.join(npmlogPath, 'package.json');
-        if (fs.existsSync(packageJsonPath)) {
-          const pkgJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-          console.log('npmlog package.json main:', pkgJson.main);
-          console.log('npmlog package.json version:', pkgJson.version);
-        }
-      } catch (e) {
-        console.log('Error checking npmlog:', e.message);
-      }
-    }
   } catch (e) {
     console.error('Error reading node_modules:', e.message);
   }
@@ -82,63 +72,8 @@ if (fs.existsSync(packageJsonPath)) {
   }
 }
 
-console.log('\n=== ATTEMPTING TO LOAD MODULES ===\n');
-// ===== DEBUG LOGGING END =====
-
-// Try to load modules with error handling
-let express, cors, sqlite3, bcrypt, jwt;
-
-try {
-  console.log('Loading express...');
-  express = require('express');
-  console.log('✓ express loaded');
-} catch (e) {
-  console.error('✗ Failed to load express:', e.message);
-  console.error('Stack:', e.stack);
-  process.exit(1);
-}
-
-try {
-  console.log('Loading cors...');
-  cors = require('cors');
-  console.log('✓ cors loaded');
-} catch (e) {
-  console.error('✗ Failed to load cors:', e.message);
-  console.error('Stack:', e.stack);
-  process.exit(1);
-}
-
-try {
-  console.log('Loading sqlite3...');
-  sqlite3 = require('sqlite3').verbose();
-  console.log('✓ sqlite3 loaded');
-} catch (e) {
-  console.error('✗ Failed to load sqlite3:', e.message);
-  console.error('Stack:', e.stack);
-  process.exit(1);
-}
-
-try {
-  console.log('Loading bcrypt...');
-  bcrypt = require('bcrypt');
-  console.log('✓ bcrypt loaded');
-} catch (e) {
-  console.error('✗ Failed to load bcrypt:', e.message);
-  console.error('Stack:', e.stack);
-  process.exit(1);
-}
-
-try {
-  console.log('Loading jsonwebtoken...');
-  jwt = require('jsonwebtoken');
-  console.log('✓ jsonwebtoken loaded');
-} catch (e) {
-  console.error('✗ Failed to load jsonwebtoken:', e.message);
-  console.error('Stack:', e.stack);
-  process.exit(1);
-}
-
 console.log('\n=== ALL MODULES LOADED SUCCESSFULLY ===\n');
+// ===== DEBUG LOGGING END =====
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -165,26 +100,26 @@ if (fs.existsSync(clientDistPath)) {
   console.error('CRITICAL: client/dist directory does NOT exist. Frontend will not load.');
 }
 
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Error opening database', err);
-  } else {
-    console.log('Connected to SQLite database.');
-    initDb();
-  }
-});
+let db;
+try {
+  db = new Database(dbPath, { verbose: console.log });
+  console.log('Connected to SQLite database.');
+  initDb();
+} catch (err) {
+  console.error('Error opening database', err);
+}
 
 function initDb() {
-  db.serialize(() => {
+  try {
     // Users Table
-    db.run(`CREATE TABLE IF NOT EXISTS users (
+    db.prepare(`CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE,
       password TEXT
-    )`);
+    )`).run();
 
     // Posts Table
-    db.run(`CREATE TABLE IF NOT EXISTS posts (
+    db.prepare(`CREATE TABLE IF NOT EXISTS posts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT,
       content TEXT,
@@ -192,8 +127,11 @@ function initDb() {
       category TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       views INTEGER DEFAULT 0
-    )`);
-  });
+    )`).run();
+    console.log('Database tables initialized.');
+  } catch (err) {
+    console.error('Error initializing tables:', err);
+  }
 }
 
 // --- Middleware ---
@@ -220,23 +158,23 @@ app.post('/api/register', async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const stmt = db.prepare('INSERT INTO users (username, password) VALUES (?, ?)');
-    stmt.run(username, hashedPassword, function(err) {
-      if (err) {
-        return res.status(400).json({ message: 'Username already exists' });
-      }
-      res.json({ message: 'User created' });
-    });
-    stmt.finalize();
-  } catch (e) {
+    stmt.run(username, hashedPassword);
+    res.json({ message: 'User created' });
+  } catch (err) {
+    if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      return res.status(400).json({ message: 'Username already exists' });
+    }
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
 // Login
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-  db.get('SELECT * FROM users WHERE username = ?', [username], async (err, user) => {
-    if (err) return res.status(500).json({ message: 'Server error' });
+  try {
+    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+    
     if (!user) return res.status(400).json({ message: 'User not found' });
 
     if (await bcrypt.compare(password, user.password)) {
@@ -245,34 +183,43 @@ app.post('/api/login', (req, res) => {
     } else {
       res.status(403).json({ message: 'Invalid password' });
     }
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 // Get Posts (by category)
 app.get('/api/posts', (req, res) => {
   const { category } = req.query;
-  const sql = category 
-    ? 'SELECT * FROM posts WHERE category = ? ORDER BY created_at DESC' 
-    : 'SELECT * FROM posts ORDER BY created_at DESC';
-  const params = category ? [category] : [];
-
-  db.all(sql, params, (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
+  try {
+    const sql = category 
+      ? 'SELECT * FROM posts WHERE category = ? ORDER BY created_at DESC' 
+      : 'SELECT * FROM posts ORDER BY created_at DESC';
+    const rows = category 
+      ? db.prepare(sql).all(category)
+      : db.prepare(sql).all();
     res.json(rows);
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Get Single Post
 app.get('/api/posts/:id', (req, res) => {
   const { id } = req.params;
-  // Increment views
-  db.run('UPDATE posts SET views = views + 1 WHERE id = ?', [id]);
-  
-  db.get('SELECT * FROM posts WHERE id = ?', [id], (err, row) => {
-    if (err) return res.status(500).json({ error: err.message });
+  try {
+    // Increment views
+    db.prepare('UPDATE posts SET views = views + 1 WHERE id = ?').run(id);
+    
+    const row = db.prepare('SELECT * FROM posts WHERE id = ?').get(id);
     if (!row) return res.status(404).json({ message: 'Post not found' });
     res.json(row);
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Create Post (Protected)
@@ -280,12 +227,14 @@ app.post('/api/posts', authenticateToken, (req, res) => {
   const { title, content, category } = req.body;
   const author = req.user.username;
   
-  const stmt = db.prepare('INSERT INTO posts (title, content, author, category) VALUES (?, ?, ?, ?)');
-  stmt.run(title, content, author, category, function(err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ id: this.lastID, title, content, author, category });
-  });
-  stmt.finalize();
+  try {
+    const stmt = db.prepare('INSERT INTO posts (title, content, author, category) VALUES (?, ?, ?, ?)');
+    const info = stmt.run(title, content, author, category);
+    res.json({ id: info.lastInsertRowid, title, content, author, category });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Update Post (Protected)
@@ -294,17 +243,18 @@ app.put('/api/posts/:id', authenticateToken, (req, res) => {
   const { content } = req.body;
   const user = req.user.username;
 
-  // First check ownership
-  db.get('SELECT author FROM posts WHERE id = ?', [id], (err, row) => {
-    if (err) return res.status(500).json({ error: err.message });
+  try {
+    // First check ownership
+    const row = db.prepare('SELECT author FROM posts WHERE id = ?').get(id);
     if (!row) return res.status(404).json({ message: 'Post not found' });
     if (row.author !== user) return res.status(403).json({ message: 'Not authorized' });
 
-    db.run('UPDATE posts SET content = ? WHERE id = ?', [content, id], function(err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ message: 'Updated' });
-    });
-  });
+    db.prepare('UPDATE posts SET content = ? WHERE id = ?').run(content, id);
+    res.json({ message: 'Updated' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Delete Post (Protected)
@@ -312,20 +262,21 @@ app.delete('/api/posts/:id', authenticateToken, (req, res) => {
   const { id } = req.params;
   const user = req.user.username;
 
-  db.get('SELECT author FROM posts WHERE id = ?', [id], (err, row) => {
-    if (err) return res.status(500).json({ error: err.message });
+  try {
+    const row = db.prepare('SELECT author FROM posts WHERE id = ?').get(id);
     if (!row) return res.status(404).json({ message: 'Post not found' });
     if (row.author !== user) return res.status(403).json({ message: 'Not authorized' });
 
-    db.run('DELETE FROM posts WHERE id = ?', [id], function(err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ message: 'Deleted' });
-    });
-  });
+    db.prepare('DELETE FROM posts WHERE id = ?').run(id);
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// The "catchall" handler: for any request that doesn't
-// match one above, send back React's index.html file.
+// The "catchall" handler: for any request that doesn\'t
+// match one above, send back React\'s index.html file.
 app.get('*', (req, res) => {
   const indexPath = path.join(clientDistPath, 'index.html');
   res.sendFile(indexPath, (err) => {
