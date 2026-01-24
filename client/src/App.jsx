@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useParams } from 'react-router-dom';
-import { Container, Row, Col, Navbar, Nav, ListGroup, Button, Form, Alert, Table, InputGroup, FormControl } from 'react-bootstrap';
+import { Container, Row, Col, Navbar, Nav, ListGroup, Button, Form, Alert, Table, InputGroup, FormControl, Card } from 'react-bootstrap';
 import axios from 'axios';
 
 // --- Auth Context & Helper ---
@@ -190,20 +190,28 @@ const Sidebar = () => {
 };
 
 const Home = () => {
-  // Dummy data for visual structure
-  const recentPosts = [
-    { cat: 'General', title: 'Has anyone used the new Easton bat?', id: 1 },
-    { cat: 'MLB', title: 'Dodgers lineup analysis', id: 2 },
-    { cat: 'Q&A', title: 'Best drills for U10 pitchers?', id: 3 },
-    { cat: 'Life', title: 'Traveling to Arizona for Spring Training', id: 4 },
-    { cat: 'Equip', title: 'Review: Wilson A2000', id: 5 },
-  ];
+  const [recentPosts, setRecentPosts] = useState([]);
+  const [marketPosts, setMarketPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const marketPosts = [
-    { cat: 'Sell', title: 'Rawlings Heart of the Hide (Mint)', id: 10 },
-    { cat: 'Buy', title: 'Looking for catchers gear set', id: 11 },
-    { cat: 'Sell', title: 'Batting cage net 10x10', id: 12 },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [resGeneral, resMarket] = await Promise.all([
+          axios.get('/api/posts?category=general'),
+          axios.get('/api/posts?category=market')
+        ]);
+        setRecentPosts(resGeneral.data.slice(0, 5));
+        setMarketPosts(resMarket.data.slice(0, 5));
+      } catch (err) {
+        console.error('Error fetching home data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <div>
@@ -213,30 +221,36 @@ const Home = () => {
         <p>Sign up now for early bird discounts.</p>
       </div>
 
-      <Row>
-        <Col md={6} className="mb-4">
-          <h5 style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px', color: '#f26522' }}>Talk Lounge</h5>
-          <ul className="portal-list">
-            {recentPosts.map(p => (
-              <li key={p.id}>
-                <span className="category-tag">[{p.cat}]</span>
-                <Link to={`/post/${p.id}`}>{p.title}</Link>
-              </li>
-            ))}
-          </ul>
-        </Col>
-        <Col md={6} className="mb-4">
-          <h5 style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px', color: '#f26522' }}>Marketplace</h5>
-          <ul className="portal-list">
-            {marketPosts.map(p => (
-              <li key={p.id}>
-                <span className="category-tag">[{p.cat}]</span>
-                <Link to={`/post/${p.id}`}>{p.title}</Link>
-              </li>
-            ))}
-          </ul>
-        </Col>
-      </Row>
+      {loading ? <p>Loading data...</p> : (
+        <>
+          <Row>
+            <Col md={6} className="mb-4">
+              <h5 style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px', color: '#f26522' }}>Talk Lounge</h5>
+              <ul className="portal-list">
+                {recentPosts.map(p => (
+                  <li key={p.id}>
+                    <span className="category-tag">[{p.category}]</span>
+                    <Link to={`/post/${p.id}`}>{p.title}</Link>
+                  </li>
+                ))}
+                {recentPosts.length === 0 && <li>No posts yet</li>}
+              </ul>
+            </Col>
+            <Col md={6} className="mb-4">
+              <h5 style={{ borderBottom: '2px solid #f26522', paddingBottom: '5px', color: '#f26522' }}>Marketplace</h5>
+              <ul className="portal-list">
+                {marketPosts.map(p => (
+                  <li key={p.id}>
+                    <span className="category-tag">[{p.category}]</span>
+                    <Link to={`/post/${p.id}`}>{p.title}</Link>
+                  </li>
+                ))}
+                {marketPosts.length === 0 && <li>No posts yet</li>}
+              </ul>
+            </Col>
+          </Row>
+        </>
+      )}
 
       <Row>
          <Col md={6} className="mb-4">
@@ -440,14 +454,18 @@ const PostDetail = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
 
+  const [error, setError] = useState(null);
+
   useEffect(() => {
     const fetchPost = async () => {
       try {
+        setError(null);
         const res = await axios.get(`/api/posts/${id}`);
         setPost(res.data);
         setEditContent(res.data.content);
       } catch (err) {
         console.error(err);
+        setError('Post not found or server error');
       }
     };
     fetchPost();
@@ -473,6 +491,7 @@ const PostDetail = () => {
     }
   }
 
+  if (error) return <Alert variant="danger">{error}</Alert>;
   if (!post) return <p>Loading...</p>;
 
   return (

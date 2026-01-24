@@ -104,12 +104,12 @@ let db;
 try {
   db = new Database(dbPath, { verbose: console.log });
   console.log('Connected to SQLite database.');
-  initDb();
+  await initDb();
 } catch (err) {
   console.error('Error opening database', err);
 }
 
-function initDb() {
+async function initDb() {
   try {
     // Users Table
     db.prepare(`CREATE TABLE IF NOT EXISTS users (
@@ -128,6 +128,19 @@ function initDb() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       views INTEGER DEFAULT 0
     )`).run();
+
+    // Seed Data
+    const count = db.prepare('SELECT COUNT(*) as count FROM posts').get().count;
+    if (count === 0) {
+      // Create admin user
+      const hashedAdminPw = await bcrypt.hash('admin123', 10);
+      db.prepare('INSERT INTO users (username, password) VALUES (?, ?)').run('admin', hashedAdminPw);
+
+      const insert = db.prepare('INSERT INTO posts (title, content, author, category) VALUES (?, ?, ?, ?)');
+      insert.run('Welcome to BaseballUSA!', 'This is the first post on the platform. Feel free to discuss anything baseball!', 'admin', 'general');
+      insert.run('Best bats for 2026', 'What are your recommendations for the new season?', 'admin', 'equipment');
+      console.log('Seed data inserted.');
+    }
     console.log('Database tables initialized.');
   } catch (err) {
     console.error('Error initializing tables:', err);
