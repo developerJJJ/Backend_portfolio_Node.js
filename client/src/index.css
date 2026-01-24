@@ -92,6 +92,19 @@ a:hover {
   text-overflow: ellipsis;
 }
 
+.clickable-li:hover {
+  background-color: #fcfcfc;
+}
+
+.clickable-li a {
+  color: #333;
+}
+
+.clickable-li:hover .post-title-text {
+  text-decoration: underline;
+  color: #f26522;
+}
+
 .category-tag {
   color: #cc0000;
   margin-right: 5px;
