@@ -60,6 +60,14 @@ const dbPath = path.resolve(__dirname, 'baseball.db');
 // Health check endpoint
 app.get('/health', (req, res) => res.send('Server is healthy'));
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.send(`
+    <h1>BaseballUSA API Server</h1>
+    <p>This is the backend API server. If you are looking for the application, please visit the <a href="http://localhost:3000">Frontend Client</a>.</p>
+  `);
+});
+
 let db;
 try {
   db = new Database(dbPath, { verbose: console.log });
