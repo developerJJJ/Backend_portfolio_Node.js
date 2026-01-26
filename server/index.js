@@ -86,7 +86,7 @@ if (fs.existsSync(clientOutPath)) {
 }
 
 // Handle client-side routing: serve frontend for non-API routes
-app.get('*', (req, res, next) => {
+app.get('(.*)', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
   
   const staticIndexPath = path.join(clientOutPath, 'index.html');
