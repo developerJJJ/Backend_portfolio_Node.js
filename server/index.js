@@ -76,7 +76,7 @@ console.log('\n=== ALL MODULES LOADED SUCCESSFULLY ===\n');
 // ===== DEBUG LOGGING END =====
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 const SECRET_KEY = 'baseball-usa-secret-key'; // In prod, use ENV
 
 app.use(cors());

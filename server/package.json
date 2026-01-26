@@ -11,10 +11,10 @@
     "node": "^24.0.0"
   },
   "dependencies": {
-    "express": "^5.2.1",
-    "cors": "^2.8.6",
-    "better-sqlite3": "^12.6.2",
     "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.6.2",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "jsonwebtoken": "^9.0.2"
   }
 }
