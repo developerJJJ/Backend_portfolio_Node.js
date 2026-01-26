@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 
 const API_URL = 'http://localhost:5000/api';
 
+
 async function getPosts(category: string): Promise<Post[]> {
   try {
     const res = await fetch(`${API_URL}/posts?category=${category}`, { cache: 'no-store' });

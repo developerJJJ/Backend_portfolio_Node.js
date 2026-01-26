@@ -6,6 +6,7 @@ import cors from 'cors';
 import Database from 'better-sqlite3';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import next from 'next';
 
 // ===== DEBUG LOGGING START =====
 console.log('=== SERVER STARTUP DEBUG ===');
@@ -17,17 +18,6 @@ console.log('Current working directory:', process.cwd());
 // Define __dirname for ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Check node_modules directory
-const nodeModulesPath = path.join(__dirname, 'node_modules');
-
-if (fs.existsSync(nodeModulesPath)) {
-  try {
-     // Basic check
-  } catch (e) {
-    console.error('Error reading node_modules:', e.message);
-  }
-}
 
 // Check package.json
 const packageJsonPath = path.join(__dirname, 'package.json');
@@ -41,9 +31,17 @@ if (fs.existsSync(packageJsonPath)) {
 }
 // ===== DEBUG LOGGING END =====
 
+const dev = process.env.NODE_ENV !== 'production';
+const hostname = 'localhost';
+const PORT = parseInt(process.env.PORT || '5000', 10);
+const SECRET_KEY = process.env.SECRET_KEY || 'baseball-usa-secret-key'; // In prod, use ENV
+
+// Initialize Next.js
+const clientDir = path.resolve(__dirname, '../client');
+const nextApp = next({ dev, hostname, port: PORT, dir: clientDir });
+const handle = nextApp.getRequestHandler();
+
 const app = express();
-const PORT = process.env.PORT || 5000;
-const SECRET_KEY = 'baseball-usa-secret-key'; // In prod, use ENV
 
 app.use(cors());
 app.use(express.json());
@@ -54,36 +52,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// --- Middleware ---
+// --- Database Setup ---
 const dbPath = path.resolve(__dirname, 'baseball.db');
-
-// Health check endpoint
-app.get('/health', (req, res) => res.send('Server is healthy'));
-
-// Root endpoint (Keep this BEFORE static files if you want a custom HTML for /)
-// Or comment it out to let the Next.js index.html take over.
-/*
-app.get('/', (req, res) => {
-  res.send(`
-    <h1>BaseballUSA API Server</h1>
-    <p>This is the backend API server. If you are looking for the application, please visit the <a href="http://localhost:3000">Frontend Client</a>.</p>
-  `);
-});
-*/
-
-// --- Serve Static Files (Frontend) ---
-const clientOutPath = path.resolve(__dirname, '../client/out');
-const nextStaticPath = path.resolve(__dirname, '../client/.next/static');
-const nextPublicPath = path.resolve(__dirname, '../client/public');
-
-if (fs.existsSync(clientOutPath)) {
-  // If static export was successful
-  app.use(express.static(clientOutPath));
-} else if (fs.existsSync(nextStaticPath)) {
-  // Serve standard Next.js build assets
-  app.use('/_next/static', express.static(nextStaticPath));
-  app.use(express.static(nextPublicPath));
-}
 
 let db;
 try {
@@ -149,7 +119,10 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// --- Routes ---
+// --- API Routes ---
+
+// Health check endpoint
+app.get('/health', (req, res) => res.send('Server is healthy'));
 
 // Register
 app.post('/api/register', async (req, res) => {
@@ -291,23 +264,14 @@ app.delete('/api/posts/:id', authenticateToken, (req, res) => {
   }
 });
 
-// Handle client-side routing: serve frontend for non-API routes
-// This MUST come after all API routes to avoid intercepting API calls
-app.use((req, res, next) => {
-  const staticIndexPath = path.join(clientOutPath, 'index.html');
-  if (fs.existsSync(staticIndexPath)) {
-     return res.sendFile(staticIndexPath);
-  }
-  
-  // Note: For full Next.js dynamic features, you usually run 'next start'.
-  // This is a fallback for simple deployments.
-  res.send(`
-    <h1>BaseballUSA API</h1>
-    <p>Backend is running. If you see this, the frontend build is not yet linked.</p>
-    <a href="/health">Check Health</a>
-  `);
+// Let Next.js handle all other requests
+app.use((req, res) => {
+  return handle(req, res);
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+// Start Next.js and then start Express server
+nextApp.prepare().then(() => {
+  app.listen(PORT, () => {
+    console.log(`> Ready on http://${hostname}:${PORT}`);
+  });
 });
