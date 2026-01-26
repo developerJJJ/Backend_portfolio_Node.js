@@ -85,24 +85,6 @@ if (fs.existsSync(clientOutPath)) {
   app.use(express.static(nextPublicPath));
 }
 
-// Handle client-side routing: serve frontend for non-API routes
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api')) return next();
-  
-  const staticIndexPath = path.join(clientOutPath, 'index.html');
-  if (fs.existsSync(staticIndexPath)) {
-     return res.sendFile(staticIndexPath);
-  }
-  
-  // Note: For full Next.js dynamic features, you usually run 'next start'.
-  // This is a fallback for simple deployments.
-  res.send(`
-    <h1>BaseballUSA API</h1>
-    <p>Backend is running. If you see this, the frontend build is not yet linked.</p>
-    <a href="/health">Check Health</a>
-  `);
-});
-
 let db;
 try {
   db = new Database(dbPath, { verbose: console.log });
@@ -307,6 +289,23 @@ app.delete('/api/posts/:id', authenticateToken, (req, res) => {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// Handle client-side routing: serve frontend for non-API routes
+// This MUST come after all API routes to avoid intercepting API calls
+app.use((req, res, next) => {
+  const staticIndexPath = path.join(clientOutPath, 'index.html');
+  if (fs.existsSync(staticIndexPath)) {
+     return res.sendFile(staticIndexPath);
+  }
+  
+  // Note: For full Next.js dynamic features, you usually run 'next start'.
+  // This is a fallback for simple deployments.
+  res.send(`
+    <h1>BaseballUSA API</h1>
+    <p>Backend is running. If you see this, the frontend build is not yet linked.</p>
+    <a href="/health">Check Health</a>
+  `);
 });
 
 app.listen(PORT, () => {
