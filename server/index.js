@@ -17,42 +17,13 @@ console.log('Current working directory:', process.cwd());
 // Define __dirname for ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-console.log('__dirname:', __dirname);
-console.log('NODE_PATH:', process.env.NODE_PATH || 'not set');
-console.log('NODE_ENV:', process.env.NODE_ENV || 'not set');
 
 // Check node_modules directory
 const nodeModulesPath = path.join(__dirname, 'node_modules');
-console.log('\n=== NODE_MODULES CHECK ===');
-console.log('node_modules path:', nodeModulesPath);
-console.log('node_modules exists:', fs.existsSync(nodeModulesPath));
 
 if (fs.existsSync(nodeModulesPath)) {
   try {
-    const nodeModulesContents = fs.readdirSync(nodeModulesPath);
-    console.log('node_modules contents (first 20):', nodeModulesContents.slice(0, 20));
-    console.log('Total packages in node_modules:', nodeModulesContents.length);
-    
-    // Check for specific problematic packages
-    const checkPackages = ['npmlog', 'better-sqlite3', 'bcrypt', 'express', 'cors'];
-    console.log('\n=== PACKAGE EXISTENCE CHECK ===');
-    checkPackages.forEach(pkg => {
-      const pkgPath = path.join(nodeModulesPath, pkg);
-      const exists = fs.existsSync(pkgPath);
-      console.log(`${pkg}: ${exists ? 'EXISTS' : 'MISSING'}`);
-      if (exists) {
-        try {
-          const pkgJsonPath = path.join(pkgPath, 'package.json');
-          if (fs.existsSync(pkgJsonPath)) {
-            const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
-            console.log(`  - Version: ${pkgJson.version}`);
-            console.log(`  - Main: ${pkgJson.main || 'not specified'}`);
-          }
-        } catch (e) {
-          console.log(`  - Error reading package.json: ${e.message}`);
-        }
-      }
-    });
+     // Basic check
   } catch (e) {
     console.error('Error reading node_modules:', e.message);
   }
@@ -60,19 +31,14 @@ if (fs.existsSync(nodeModulesPath)) {
 
 // Check package.json
 const packageJsonPath = path.join(__dirname, 'package.json');
-console.log('\n=== PACKAGE.JSON CHECK ===');
 if (fs.existsSync(packageJsonPath)) {
   try {
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
     console.log('Package name:', packageJson.name);
-    console.log('Package version:', packageJson.version);
-    console.log('Dependencies:', Object.keys(packageJson.dependencies || {}));
   } catch (e) {
     console.error('Error reading package.json:', e.message);
   }
 }
-
-console.log('\n=== ALL MODULES LOADED SUCCESSFULLY ===\n');
 // ===== DEBUG LOGGING END =====
 
 const app = express();
@@ -90,21 +56,9 @@ app.use((req, res, next) => {
 
 // --- Middleware ---
 const dbPath = path.resolve(__dirname, 'baseball.db');
-const clientDistPath = path.resolve(__dirname, '../client/dist');
 
 // Health check endpoint
 app.get('/health', (req, res) => res.send('Server is healthy'));
-
-// Serve static files from the React app
-app.use(express.static(clientDistPath));
-console.log(`Serving static files from: ${clientDistPath}`);
-
-// Debug: Check if client/dist exists and list files
-if (fs.existsSync(clientDistPath)) {
-  console.log('client/dist directory exists. Contents:', fs.readdirSync(clientDistPath));
-} else {
-  console.error('CRITICAL: client/dist directory does NOT exist. Frontend will not load.');
-}
 
 let db;
 try {
@@ -310,18 +264,6 @@ app.delete('/api/posts/:id', authenticateToken, (req, res) => {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
-});
-
-// The "catchall" handler: for any request that doesn't
-// match one above, send back React's index.html file.
-app.get(/(.*)/, (req, res) => {
-  const indexPath = path.join(clientDistPath, 'index.html');
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      console.error('Error sending index.html:', err);
-      res.status(500).send('Error loading frontend');
-    }
-  });
 });
 
 app.listen(PORT, () => {

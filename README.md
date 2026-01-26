@@ -7,8 +7,8 @@ BaseballUSA is a full-stack community portal designed for US baseball enthusiast
 ## 🛠 Tech Stack
 
 ### Frontend
-*   **React (Vite)**: Fast, modern UI library for building interactive interfaces.
-*   **React Router**: Handles client-side routing for seamless navigation.
+*   **Next.js**: The React Framework for the Web.
+*   **App Router**: Next.js 13+ App Directory for routing and layouts.
 *   **Bootstrap 5 (React-Bootstrap)**: Provides a responsive grid system and pre-styled components for the "portal" layout.
 *   **Axios**: Promise-based HTTP client for making API requests to the backend.
 
@@ -61,7 +61,7 @@ The application follows a classic **Client-Server** architecture.
 cd server
 npm install
 npm start
-# Server runs on http://localhost:3000
+# Server runs on http://localhost:5000
 ```
 
 **2. Frontend Client**
@@ -69,5 +69,5 @@ npm start
 cd client
 npm install
 npm run dev
-# Client runs on http://localhost:5173 (usually)
+# Client runs on http://localhost:3000
 ```
