@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "description": "Root package.json for deployment",
   "scripts": {
-    "install-client": "cd client && npm install",
-    "install-server": "cd server && npm install",
-    "build-client": "cd client && npm run build",
+    "install-client": "npm install --prefix client",
+    "install-server": "npm install --prefix server",
+    "build-client": "npm run build --prefix client",
     "build": "npm run install-client && npm run install-server && npm run build-client",
-    "start": "cd server && node index.js"
+    "start": "node server/index.js",
+    "dev": "npm run start --prefix server"
   },
   "engines": {
     "node": "^24.0.0"

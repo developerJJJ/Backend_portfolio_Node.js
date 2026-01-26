@@ -60,11 +60,46 @@ const dbPath = path.resolve(__dirname, 'baseball.db');
 // Health check endpoint
 app.get('/health', (req, res) => res.send('Server is healthy'));
 
-// Root endpoint
+// Root endpoint (Keep this BEFORE static files if you want a custom HTML for /)
+// Or comment it out to let the Next.js index.html take over.
+/*
 app.get('/', (req, res) => {
   res.send(`
     <h1>BaseballUSA API Server</h1>
     <p>This is the backend API server. If you are looking for the application, please visit the <a href="http://localhost:3000">Frontend Client</a>.</p>
+  `);
+});
+*/
+
+// --- Serve Static Files (Frontend) ---
+const clientOutPath = path.resolve(__dirname, '../client/out');
+const nextStaticPath = path.resolve(__dirname, '../client/.next/static');
+const nextPublicPath = path.resolve(__dirname, '../client/public');
+
+if (fs.existsSync(clientOutPath)) {
+  // If static export was successful
+  app.use(express.static(clientOutPath));
+} else if (fs.existsSync(nextStaticPath)) {
+  // Serve standard Next.js build assets
+  app.use('/_next/static', express.static(nextStaticPath));
+  app.use(express.static(nextPublicPath));
+}
+
+// Handle client-side routing: serve frontend for non-API routes
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next();
+  
+  const staticIndexPath = path.join(clientOutPath, 'index.html');
+  if (fs.existsSync(staticIndexPath)) {
+     return res.sendFile(staticIndexPath);
+  }
+  
+  // Note: For full Next.js dynamic features, you usually run 'next start'.
+  // This is a fallback for simple deployments.
+  res.send(`
+    <h1>BaseballUSA API</h1>
+    <p>Backend is running. If you see this, the frontend build is not yet linked.</p>
+    <a href="/health">Check Health</a>
   `);
 });
 
