@@ -94,9 +94,13 @@ async function initDb() {
 
       const insert = db.prepare('INSERT INTO posts (title, content, author, category) VALUES (?, ?, ?, ?)');
       insert.run('Welcome to BaseballUSA!', 'This is the first post on the platform. Feel free to discuss anything baseball!', 'admin', 'general');
-      insert.run('Best bats for 2026', 'What are your recommendations for the new season?', 'admin', 'equipment');
+      insert.run('Best bats for 2026', 'What are your recommendations for the new season?', 'admin', 'market');
       insert.run('2026 Tournament Schedule', 'The spring season schedule is now live!', 'admin', 'leagues');
       insert.run('Cooperstown Travel Guide', 'Top tips for visiting the Hall of Fame.', 'admin', 'life');
+      insert.run('How to improve your pitching speed', 'Focus on your leg drive and core strength. Long tossing is also essential.', 'admin', 'general');
+      insert.run('WTT: My custom A2000 for a Pro Preferred', 'Looking to trade my Wilson A2000 (11.5") for a Rawlings Pro Preferred.', 'admin', 'market');
+      insert.run('Summer league tryouts megathread', 'Post all summer league tryout info here.', 'admin', 'leagues');
+      insert.run('Recruiting tips for high school players', 'How to get noticed by college coaches. Video is key!', 'admin', 'life');
       console.log('Seed data inserted successfully.');
     }
     console.log('Database tables initialized.');
