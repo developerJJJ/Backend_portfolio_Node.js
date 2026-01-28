@@ -4,7 +4,9 @@ import { Post } from './types';
 // Force dynamic rendering since data changes
 export const dynamic = 'force-dynamic';
 
-const API_URL = 'http://localhost:5000/api';
+const PORT = process.env.PORT || '5000';
+const API_URL = `http://localhost:${PORT}/api`;
+
 
 async function getPosts(category: string): Promise<Post[]> {
   try {
